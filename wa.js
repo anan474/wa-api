@@ -1,9 +1,17 @@
 const wbm = require("wbm");
 
-if (KIRIM_WA) wbm.start({ showBrowser: true });
-
-async function notifWA(pesan) {
-  console.log("mengirim pesan");
-  console.log(pesan);
-  if (KIRIM_WA) await wbm.send(pesan.untuk, pesan.teks);
+function setup_wa() {
+  wbm.start();
 }
+
+async function kirim_wa(pesan) {
+  console.log(`${pesan.untuk};${pesan.teks}`);
+  await wbm.send(pesan.untuk, pesan.teks).catch((err) => {
+    console.log(err);
+  });
+}
+
+module.exports = {
+  setup_wa,
+  kirim_wa,
+};

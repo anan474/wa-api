@@ -5,15 +5,14 @@ const morgan = require("morgan");
 const compression = require("compression");
 const helmet = require("helmet");
 const cors = require("cors");
+const wa = require("./wa");
+
 const app = express();
 
 // port yang digunakan server express, diatur di ENV, default: 3000
 app.set("port", process.env.PORT || 3000);
 
-// hanya nyalakan ketika develop
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
+app.use(morgan("tiny"));
 
 // parsing json
 app.use(
@@ -21,20 +20,30 @@ app.use(
     limit: "20mb",
   })
 );
-// parsing application/x-www-form-urlencoded
-app.use(
-  bodyParser.urlencoded({
-    limit: "20mb",
-    extended: true,
-  })
-);
 
 app.use(cors());
 app.use(compression());
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-  })
-);
+app.use(helmet());
+
+if (process.env.WA_ON) {
+  wa.setup_wa();
+}
+
+app.get("/", async function (req, res) {
+  const { untuk, teks } = req.body;
+  if (untuk && teks) {
+    await wa.kirim_wa({ untuk, teks }).then(() => {
+      res.send({
+        error: false,
+        pesan: "pesan berhasil dikirim",
+      });
+    });
+  } else {
+    res.send({
+      error: true,
+      pesan: "nomor tujuan atau pesan bermasalah",
+    });
+  }
+});
 
 app.listen(app.get("port"));
